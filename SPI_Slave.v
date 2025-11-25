@@ -93,25 +93,13 @@ end
 assign cs_n_negedge = ~cs_n_a & cs_n_b;
 
 
-generate
-	case (CPHA)
-	
-	//sampl_en enables sampling of the data received on the MISO (Master In, Slave Out) line.
-		0: assign sample_en = sclk_posedge;
-		1: assign sample_en = sclk_negedge;
-		default: assign sampl_en = sclk_posedge;
-	endcase
-endgenerate
+// Determine leading and trailing edges based on CPOL
+wire leading_edge  = (CPOL == 0) ? sclk_posedge : sclk_negedge;
+wire trailing_edge = (CPOL == 0) ? sclk_negedge : sclk_posedge;
 
-generate
- 	case (CPHA)
- 	
- 	 //shift_en enables shifting data out on the MOSI (Master Out, Slave In) line.
-		0: assign shift_en = sclk_negedge;
- 		1: assign shift_en = sclk_posedge;
-		default: assign shift_en = sclk_posedge;
-	endcase
-endgenerate
+// Use CPHA to decide sampling and shifting edges
+assign sample_en = (CPHA == 0) ? leading_edge  : trailing_edge;
+assign shift_en  = (CPHA == 0) ? trailing_edge : leading_edge;
 
 //the register to latch the data_in
 //also the shift register to generate the miso
