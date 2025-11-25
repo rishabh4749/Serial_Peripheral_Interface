@@ -112,28 +112,13 @@ assign sclk_posedge = ~sclk_b & sclk_a;
 assign sclk_negedge = ~sclk_a & sclk_b;
 
 
-generate
-	case (CPHA)
-	//When CPHA is 0, sampling is done at the positive edge of the SPI Clock
-		0: assign sample_en = sclk_posedge; 
-		1: assign sample_en = sclk_negedge;
-		
-		//Since the default mode is 0
-		default: assign sample_en = sclk_posedge;
-	endcase
-endgenerate
+// Determine leading and trailing edges based on CPOL
+wire leading_edge  = (CPOL == 0) ? sclk_posedge : sclk_negedge;
+wire trailing_edge = (CPOL == 0) ? sclk_negedge : sclk_posedge;
 
-generate
- 	case (CPHA)
- 	//When CPHA is 0, shifting is done at the negative edge of the SPI Clock
-		0: assign shift_en = sclk_negedge;
- 		1: assign shift_en = sclk_posedge;
- 		
- 		//Since the default mode is 0
-		default: assign shift_en = sclk_negedge;
-	endcase
-endgenerate
-
+// Use CPHA to decide sampling and shifting edges
+assign sample_en = (CPHA == 0) ? leading_edge  : trailing_edge;
+assign shift_en  = (CPHA == 0) ? trailing_edge : leading_edge;
 
 //FSM-1
 always @(posedge clk or negedge rst_n) begin
